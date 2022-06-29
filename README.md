@@ -5,6 +5,6 @@ This is blank nodejs project with authentication logic implemented, it can be us
 Add .env file in your project root
 ```
 MONGO_URI=mongodb://localhost:27017/cars
-API_PORT=4001
+API_PORT=3000
 TOKEN_KEY=token_cars
 ```

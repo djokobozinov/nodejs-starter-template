@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
-const { MONGO_URI } = process.env;
+const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/cars';
 
 exports.connect = () => {
 	mongoose
-		.connect(MONGO_URI, {
+		.connect(uri, {
 			useNewUrlParser: true,
-			useUnifiedTopology: true
+			useUnifiedTopology: true,
 		})
 		.then(() => {
 			console.log('Successfully connected to database');

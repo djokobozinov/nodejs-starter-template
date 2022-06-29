@@ -4,11 +4,13 @@ const User = require('.././models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+const token_key = process.env.TOKEN_KEY || 'token_cars';
+
 router.post('/register', async (req, res) => {
 	try {
 		const { firstName, lastName, email, password } = req.body;
 		if (!(email && password && firstName && lastName)) {
-			res.status(400).send('All input is required');
+			return res.status(400).send('All input is required');
 		}
 
 		const oldUser = await User.findOne({ email });
@@ -25,16 +27,12 @@ router.post('/register', async (req, res) => {
 			password: encryptedPassword,
 		});
 
-		const token = jwt.sign(
-			{ user_id: user._id, email },
-			process.env.TOKEN_KEY,
-			{
-				expiresIn: '2h',
-			}
-		);
+		const token = jwt.sign({ user_id: user._id, email }, token_key, {
+			expiresIn: '2h',
+		});
 		user.token = token;
 
-		res.status(201).json(user);
+		return res.status(201).json(user);
 	} catch (err) {
 		console.log(err);
 	}
@@ -44,23 +42,19 @@ router.post('/login', async (req, res) => {
 	try {
 		const { email, password } = req.body;
 		if (!(email && password)) {
-			res.status(400).send('All input is required');
+			return res.status(400).send('All input is required');
 		}
 
 		const user = await User.findOne({ email });
 		if (user && (await bcrypt.compare(password, user.password))) {
-			const token = jwt.sign(
-				{ user_id: user._id, email },
-				process.env.TOKEN_KEY,
-				{
-					expiresIn: '2h',
-				}
-			);
+			const token = jwt.sign({ user_id: user._id, email }, token_key, {
+				expiresIn: '2h',
+			});
 			user.token = token;
-			res.status(200).json(user);
+			return res.status(200).json(user);
 		}
 
-		res.status(400).send('Invalid Credentials');
+		return res.status(400).send('Invalid Credentials');
 	} catch (err) {
 		console.log(err);
 	}
