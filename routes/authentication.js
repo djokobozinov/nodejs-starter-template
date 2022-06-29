@@ -1,10 +1,6 @@
 const express = require('express');
 var router = express.Router();
-const User = require('.././models/user');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-
-const token_key = process.env.TOKEN_KEY || 'token_cars';
+const UserRepostiry = require('./../repositories/user_repository');
 
 router.post('/register', async (req, res) => {
 	try {
@@ -13,24 +9,12 @@ router.post('/register', async (req, res) => {
 			return res.status(400).send('All input is required');
 		}
 
-		const oldUser = await User.findOne({ email });
+		const oldUser = await UserRepostiry.getUserByEmail(email);
 		if (oldUser) {
 			return res.status(409).send('User Already Exist. Please Login');
 		}
 
-		encryptedPassword = await bcrypt.hash(password, 10);
-
-		const user = await User.create({
-			firstName,
-			lastName,
-			email: email.toLowerCase(),
-			password: encryptedPassword,
-		});
-
-		const token = jwt.sign({ user_id: user._id, email }, token_key, {
-			expiresIn: '2h',
-		});
-		user.token = token;
+		const user = await UserRepostiry.registerUser(req.body);
 
 		return res.status(201).json(user);
 	} catch (err) {
@@ -45,16 +29,12 @@ router.post('/login', async (req, res) => {
 			return res.status(400).send('All input is required');
 		}
 
-		const user = await User.findOne({ email });
-		if (user && (await bcrypt.compare(password, user.password))) {
-			const token = jwt.sign({ user_id: user._id, email }, token_key, {
-				expiresIn: '2h',
-			});
-			user.token = token;
-			return res.status(200).json(user);
+		const user = await UserRepostiry.login(req.body);
+		if (user == null) {
+			return res.status(400).send('Invalid Credentials');
 		}
 
-		return res.status(400).send('Invalid Credentials');
+		return res.status(200).json(user);
 	} catch (err) {
 		console.log(err);
 	}
